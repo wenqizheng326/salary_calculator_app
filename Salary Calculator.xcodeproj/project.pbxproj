@@ -14,6 +14,8 @@
 		348B0DAE2C37D508008CC498 /* Salary_CalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348B0DAD2C37D508008CC498 /* Salary_CalculatorTests.swift */; };
 		348B0DB82C37D508008CC498 /* Salary_CalculatorUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348B0DB72C37D508008CC498 /* Salary_CalculatorUITests.swift */; };
 		348B0DBA2C37D508008CC498 /* Salary_CalculatorUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348B0DB92C37D508008CC498 /* Salary_CalculatorUITestsLaunchTests.swift */; };
+		34EB1C152C64214500535C9F /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EB1C142C64214500535C9F /* Extensions.swift */; };
+		34EB1C172C94337800535C9F /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EB1C162C94337800535C9F /* Models.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +46,8 @@
 		348B0DB32C37D508008CC498 /* Salary CalculatorUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Salary CalculatorUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		348B0DB72C37D508008CC498 /* Salary_CalculatorUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Salary_CalculatorUITests.swift; sourceTree = "<group>"; };
 		348B0DB92C37D508008CC498 /* Salary_CalculatorUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Salary_CalculatorUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		34EB1C142C64214500535C9F /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		34EB1C162C94337800535C9F /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,7 +99,9 @@
 			isa = PBXGroup;
 			children = (
 				348B0D9C2C37D507008CC498 /* Salary_CalculatorApp.swift */,
+				34EB1C162C94337800535C9F /* Models.swift */,
 				348B0D9E2C37D507008CC498 /* ContentView.swift */,
+				34EB1C142C64214500535C9F /* Extensions.swift */,
 				348B0DA02C37D508008CC498 /* Assets.xcassets */,
 				348B0DA22C37D508008CC498 /* Preview Content */,
 			);
@@ -258,7 +264,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				348B0D9F2C37D507008CC498 /* ContentView.swift in Sources */,
+				34EB1C152C64214500535C9F /* Extensions.swift in Sources */,
 				348B0D9D2C37D507008CC498 /* Salary_CalculatorApp.swift in Sources */,
+				34EB1C172C94337800535C9F /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
