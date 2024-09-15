@@ -10,5 +10,6 @@ import Combine
 
 class JobData: ObservableObject {
     @Published var jobList: [String] = []
-    @Published var jobHours: [String: (rate: Double, hourList: [[Date]], numHoursList: [Double])] = [:]
+    @Published var jobHours: [String: (rate: Double, hourList: [[Date]], numHoursList: [Double],income: Double)] = [:]
+
 }

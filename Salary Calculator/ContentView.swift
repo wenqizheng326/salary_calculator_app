@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State var jobName: String = ""
+    @EnvironmentObject var jobData: JobData
+//    @State var jobName: String = ""
+//    @State var jobList: [String] = []
     @State var showInputJobNameScreen: Bool = false
-    @State var jobList: [String] = []
-    
     @State private var stackPath: [String] = []
     
     var body: some View {
@@ -53,7 +53,7 @@ struct ContentView: View {
                     Spacer()
                     
                     List{
-                        ForEach(jobList, id: \.self){ job in
+                        ForEach(jobData.jobList, id: \.self){ job in
                             NavigationLink("\(job)",destination: HoursScreen(jobName: job))
                         }
                     }
@@ -81,7 +81,7 @@ struct ContentView: View {
                 }
                 
                 if(showInputJobNameScreen){
-                    InputJobNameScreen(showInputJobScreen: $showInputJobNameScreen, jobName: $jobName, jobList: $jobList)
+                    InputJobNameScreen(showInputJobScreen: $showInputJobNameScreen)
                         .transition(.move(edge: .bottom))
                 }
             }
@@ -91,11 +91,12 @@ struct ContentView: View {
 
 // MARK: Jobname input alert
 struct InputJobNameScreen: View{
+    @EnvironmentObject var jobData: JobData
     @Environment(\.presentationMode) var presentationMode
     @Binding var showInputJobScreen: Bool
-    @Binding var jobName: String
-    @Binding var jobList: [String]
-    
+//    @Binding var jobName: String
+//    @Binding var jobList: [String]
+    @State var jobName: String = ""
     @FocusState private var focus: Bool
     
     var body: some View{
@@ -128,7 +129,7 @@ struct InputJobNameScreen: View{
                             .submitLabel(.done)
                             .onSubmit {
                                 if jobName != ""{
-                                    jobList.append(jobName)
+                                    jobData.jobList.append(jobName)
                                     showInputJobScreen = false
                                     jobName = ""
                                 }
@@ -162,7 +163,7 @@ struct InputJobNameScreen: View{
                                 
                             Button(action: {
                                 if jobName != ""{
-                                    jobList.append(jobName)
+                                    jobData.jobList.append(jobName)
                                     jobName = ""
                                     showInputJobScreen = false
                                 }
@@ -194,26 +195,31 @@ struct InputJobNameScreen: View{
 
 //MARK: Job Hours input screen
 struct HoursScreen: View{
+    @EnvironmentObject var jobData: JobData
     @State var selectedDate: Date = Date()
     @State var selectedStart: Date = Date()
     @State var selectedEnd: Date = Date()
     @State var selectionStep: Int = 0
     @State var showHourPopUp: Bool = false
-    @State var hourList: [[Date]] = []
-    @State var numHoursList: [Double] = []
-    
-    @State var rate: Double = 0.00
     @State var showRateInput: Bool = false
+//    @State var hourList: [[Date]] = []
+//    @State var numHoursList: [Double] = []
+//
+    @State var rate: Double = 0.00
     
-    @State var jobName: String
+    
+    var jobName: String
     
     
     var totalHrs: Double{
-        numHoursList.reduce(0, +)
+        if let job = jobData.jobHours[jobName]{
+            return job.numHoursList.reduce(0, +)
+        }
+        return 0.0
     }
     
     var jobscreenIncome: Double{
-        rate*totalHrs
+        return rate*totalHrs
     }
     
     var body: some View{
@@ -222,11 +228,14 @@ struct HoursScreen: View{
                 .ignoresSafeArea()
             
             VStack{
-                
                 Button(action:{
-                    rate = 0.0
-                    hourList = []
-                    numHoursList = []
+//                    rate = 0.0
+                    if var job = jobData.jobHours[jobName]{
+                        job.rate = 0.0
+                        job.hourList.removeAll()
+                        job.numHoursList.removeAll()
+                        jobData.jobHours[jobName] = job
+                    }
                 }, label:{
                     Text("Clear")
                         .frame(maxWidth: .infinity,alignment: .trailing)
@@ -241,14 +250,24 @@ struct HoursScreen: View{
                     .foregroundColor(Color("TextColor"))
                     .font(.title3)
                     .bold()
+                    .onAppear{
+                        if var job = jobData.jobHours[jobName]{
+                            DispatchQueue.main.async {
+                                job.income = job.rate*totalHrs
+                                jobData.jobHours[jobName] = job
+                            }
+                        }
+                    }
                 
-                Text("$\(jobscreenIncome, specifier: "%.2f")")
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(20)
-                    .padding(.leading,-10)
-                    .foregroundColor(Color("TextColor3"))
-                    .font(.largeTitle)
-                    .bold()
+                if let job = jobData.jobHours[jobName]{
+                    Text("$\(job.income, specifier: "%.2f")")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(20)
+                        .padding(.leading,-10)
+                        .foregroundColor(Color("TextColor3"))
+                        .font(.largeTitle)
+                        .bold()
+                }
                 
                 
                 HStack{
@@ -256,12 +275,15 @@ struct HoursScreen: View{
                     Button(action:{
                         showRateInput.toggle()
                     }, label: {
-                        Text("Rate: \(rate, specifier: "%.2f")")
-                            .foregroundColor(Color("TextColor3"))
-                            .font(.title3)
-                            .frame(maxWidth: .infinity,alignment: .leading)
-                            .padding(.leading,15)
-                            .bold()
+                        if var job = jobData.jobHours[jobName]{
+                            Text("Rate: \(job.rate, specifier: "%.2f")")
+                                .foregroundColor(Color("TextColor3"))
+                                .font(.title3)
+                                .frame(maxWidth: .infinity,alignment: .leading)
+                                .padding(.leading,15)
+                                .bold()
+                        }
+                        
                     })
                     Button(action:{
                         withAnimation(.easeIn){
@@ -302,39 +324,36 @@ struct HoursScreen: View{
                 
                 VStack{
                     List{
-                        ForEach(hourList, id: \.self){ hour in
-                            HStack{
-                                Button(action: {
-                                    showHourPopUp.toggle()
-                                }, label: {
-                                    Text(hour[0].formatted(date: .abbreviated, time: .omitted))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                })
-                                
-                                
-                                Spacer()
-                                Button(action: {
-                                    showHourPopUp.toggle()
-                                }, label: {
-                                    Text(hour[1], format: .dateTime.hour().minute())
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                })
-                                Spacer()
-                                Button(action: {
-                                    showHourPopUp.toggle()
-                                }, label: {
-                                    Text(hour[2], format: .dateTime.hour().minute())
-                                })
-                                Spacer()
-                                Text("\(numHoursList[hourList.firstIndex(of: hour) ?? -1],specifier: "%0.2f")")
-                                    .padding(.leading,10)
+                        if let job = jobData.jobHours[jobName]{
+                            ForEach(job.hourList, id: \.self){ hour in
+                                HStack{
+                                    Button(action: {
+                                        showHourPopUp.toggle()
+                                    }, label: {
+                                        Text(hour[0].formatted(date: .abbreviated, time: .omitted))
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    })
+                                    Spacer()
+                                    Button(action: {
+                                        showHourPopUp.toggle()
+                                    }, label: {
+                                        Text(hour[1], format: .dateTime.hour().minute())
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                    })
+                                    Spacer()
+                                    Button(action: {
+                                        showHourPopUp.toggle()
+                                    }, label: {
+                                        Text(hour[2], format: .dateTime.hour().minute())
+                                    })
+                                    Spacer()
+                                    Text("\(job.numHoursList[job.hourList.firstIndex(of: hour) ?? -1],specifier: "%0.2f")")
+                                        .padding(.leading,10)
+                                }
                             }
-                            
                         }
-                        
-                        .listRowBackground(Color("Background"))
-                        
                     }
+                    .listRowBackground(Color("Background"))
                     .labelsHidden()
                     .listStyle(PlainListStyle())
                     Spacer()
@@ -356,13 +375,34 @@ struct HoursScreen: View{
                             selectedStart: $selectedStart,
                             selectedEnd: $selectedEnd,
                             selectionStep: $selectionStep,
-                            hourList: $hourList,
-                            numHourList: $numHoursList)
+//                            hourList:  Binding(
+//                                get: {
+//                                    jobData.jobHours[jobName]?.hourList ?? []
+//                                },
+//                                set: { newHourList in
+//                                    if var job = jobData.jobHours[jobName] {
+//                                        job.hourList = newHourList
+//                                        jobData.jobHours[jobName] = job
+//                                    }
+//                                }
+//                            ),
+//                            numHourList: Binding(
+//                                get: {
+//                                    jobData.jobHours[jobName]?.numHoursList ?? []
+//                                },
+//                                set: { newNumHoursList in
+//                                    if var job = jobData.jobHours[jobName] {
+//                                        job.numHoursList = newNumHoursList
+//                                        jobData.jobHours[jobName] = job
+//                                    }
+//                                }
+//                            ),
+                            jobName: jobName)
                 .frame(maxHeight: .infinity, alignment: .bottom)
                 .offset(x:0,y: showHourPopUp ? 0: UIScreen.main.bounds.height)
             
             if(showRateInput){
-                RateInputScreen(showRateInput: $showRateInput, rate: $rate)
+                RateInputScreen(showRateInput: $showRateInput, rate: $rate, jobName: jobName)
                     .transition(.move(edge: .bottom))
             }
             
@@ -371,27 +411,32 @@ struct HoursScreen: View{
             
           
         }
+        .onAppear{
+            if jobData.jobHours.isEmpty || jobData.jobHours.index(forKey: jobName) == nil{
+                jobData.jobHours[jobName]=(rate: 0.0, hourList: [], numHoursList: [], income: 0.0)
+            }
+        }
     }
 }
 
 
 struct HourPopupScreen: View{
+    @EnvironmentObject var jobData: JobData
     @Environment (\.presentationMode) var presentationMode
     @Binding var showHourPopUp: Bool
     @Binding var selectedDate: Date
     @Binding var selectedStart: Date
     @Binding var selectedEnd: Date
     @Binding var selectionStep: Int
-    @Binding var hourList: [[Date]]
+    @State var hours:[Date] = []
+//    @Binding var hourList: [[Date]]
+//    @Binding var numHourList:[Double]
+    
+    var jobName:String
     
     let pickDate: Int = 0
     let pickStart: Int = 1
     let pickEnd: Int = 2
-    
-    
-    
-    @State var hours:[Date] = []
-    @Binding var numHourList:[Double]
     
     var body: some View{
         var num_hours: Double = selectedEnd.timeIntervalSince(selectedStart)/3600
@@ -457,23 +502,24 @@ struct HourPopupScreen: View{
                             if(num_hours < 0){
                                 num_hours = num_hours + 24
                             }
-                            numHourList.append(num_hours)
-                            hourList.append(hours)
+//                            numHourList.append(num_hours)
+                            print(jobData.jobHours)
+                            if var job = jobData.jobHours[jobName]{
+                                print("hello")
+                                job.numHoursList.append(num_hours)
+                                job.hourList.append(hours)
+                                jobData.jobHours[jobName] = job
+                            }
+                            
                             showHourPopUp = false
                             selectionStep = 0
                             hours = []
                         }
                         
                     }, label: {
-                        if selectionStep == pickEnd{
-                            Text("Done")
+                        Text(selectionStep == pickEnd ? "Done" : "Next")
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity, alignment: .center)
-                        }else{
-                            Text("Next")
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                        }
                     })
                 }
             
@@ -503,7 +549,7 @@ struct HourPopupScreen: View{
 class NumbersOnly: ObservableObject{
     @Published var value = ""{
         didSet{
-            let filtered = value.filter{$0.isNumber}
+            let filtered = value.filter{$0.isNumber || $0 == "."}
             if value != filtered{
                 value = filtered
             }
@@ -518,8 +564,9 @@ struct RateInputScreen: View{
     @Binding var rate: Double
     
     @ObservedObject var inputRate = NumbersOnly()
-   
+    var jobName: String
     
+    @EnvironmentObject var jobData: JobData
     @FocusState private var focus: Bool
     
     var body: some View{
@@ -551,8 +598,13 @@ struct RateInputScreen: View{
                             .padding(.bottom,-15)
                             .focused($focus)
                             .submitLabel(.done)
+                            .keyboardType(.decimalPad)
                             .onSubmit {
                                 rate = (inputRate.value as NSString).doubleValue
+                                if var job = jobData.jobHours[jobName] {
+                                    job.rate = rate
+                                    jobData.jobHours[jobName] = job
+                                }
                                 showRateInput = false
                             }
                         
@@ -584,6 +636,10 @@ struct RateInputScreen: View{
                             
                             Button(action: {
                                 rate = (inputRate.value as NSString).doubleValue
+                                if var job = jobData.jobHours[jobName] {
+                                    job.rate = rate
+                                    jobData.jobHours[jobName] = job
+                                }
                                 showRateInput = false
                             }, label: {
                                 Rectangle()
