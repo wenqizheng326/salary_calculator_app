@@ -13,3 +13,4 @@ class JobData: ObservableObject {
     @Published var jobHours: [String: (rate: Double, hourList: [[Date]], numHoursList: [Double],income: Double)] = [:]
 
 }
+

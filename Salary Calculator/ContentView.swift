@@ -14,6 +14,19 @@ struct ContentView: View {
     @State var showInputJobNameScreen: Bool = false
     @State private var stackPath: [String] = []
     
+//    var totalIncome: Double {
+//        jobData.jobList.reduce(0) { total, job in
+//            total + (jobData.jobHours[job]?.income ?? 0.0)
+//        }
+//    }
+    
+    var totalOverallIncome: Double {
+        jobData.jobHours.values.reduce(0) { total, job in
+            total + (job.rate * job.numHoursList.reduce(0, +))
+        }
+    }
+
+    
     var body: some View {
         NavigationStack(path: $stackPath){
             ZStack{
@@ -38,7 +51,7 @@ struct ContentView: View {
                                 .bold()
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
-                            Text("$0.00")
+                            Text("$\(totalOverallIncome, specifier: "%.2f")")
                                 .foregroundColor(.white)
                                 .font(.largeTitle)
                                 .bold()
@@ -222,6 +235,14 @@ struct HoursScreen: View{
         return rate*totalHrs
     }
     
+    var jobIncome: Double {
+        if let job = jobData.jobHours[jobName] {
+            return job.rate * totalHrs
+        }
+        return 0.0
+    }
+
+    
     var body: some View{
         ZStack{
             Color("Background")
@@ -230,11 +251,17 @@ struct HoursScreen: View{
             VStack{
                 Button(action:{
 //                    rate = 0.0
-                    if var job = jobData.jobHours[jobName]{
-                        job.rate = 0.0
-                        job.hourList.removeAll()
-                        job.numHoursList.removeAll()
-                        jobData.jobHours[jobName] = job
+//                    if var job = jobData.jobHours[jobName]{
+//                        job.rate = 0.0
+//                        job.hourList.removeAll()
+//                        job.numHoursList.removeAll()
+//                        jobData.jobHours[jobName] = job
+//                    }
+                    
+                    if jobData.jobHours[jobName] != nil {
+                        jobData.jobHours[jobName]?.rate = 0.0
+                        jobData.jobHours[jobName]?.hourList.removeAll()
+                        jobData.jobHours[jobName]?.numHoursList.removeAll()
                     }
                 }, label:{
                     Text("Clear")
@@ -250,24 +277,24 @@ struct HoursScreen: View{
                     .foregroundColor(Color("TextColor"))
                     .font(.title3)
                     .bold()
-                    .onAppear{
-                        if var job = jobData.jobHours[jobName]{
-                            DispatchQueue.main.async {
-                                job.income = job.rate*totalHrs
-                                jobData.jobHours[jobName] = job
-                            }
-                        }
-                    }
+//                    .onAppear{
+//                        if var job = jobData.jobHours[jobName]{
+//                            DispatchQueue.main.async {
+//                                job.income = job.rate*totalHrs
+//                                jobData.jobHours[jobName] = job
+//                            }
+//                        }
+//                    }
                 
-                if let job = jobData.jobHours[jobName]{
-                    Text("$\(job.income, specifier: "%.2f")")
+//                if let job = jobData.jobHours[jobName]{
+                    Text("$\(jobIncome, specifier: "%.2f")")
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(20)
                         .padding(.leading,-10)
                         .foregroundColor(Color("TextColor3"))
                         .font(.largeTitle)
                         .bold()
-                }
+//                }
                 
                 
                 HStack{
